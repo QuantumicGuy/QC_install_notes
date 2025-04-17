@@ -1,0 +1,41 @@
+﻿#!/bin/bash
+
+# 提取输入的gjf文件名
+input_file="$1"
+
+# 检查输入文件是否存在
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+# 提取文件名（不包括路径和扩展名）
+filename=$(basename -- "$input_file")
+filename_no_ext="${filename%.*}"
+
+# 输出当前作业的信息
+echo "The job is: ${filename_no_ext}"
+
+# 提交任务到Slurm
+sbatch << EOF
+#!/bin/bash
+#SBATCH -J ${filename_no_ext}
+#SBATCH -N 1
+#SBATCH --exclusive
+#SBATCH --ntasks-per-node=20
+#SBATCH -p cpu
+#SBATCH -o ${filename_no_ext}.log
+#SBATCH -e ${filename_no_ext}_%j.err
+
+# 进入高斯工作目录
+cd $(pwd)
+
+# Gaussian16 C01 #
+export g16root=/lustre/home/acct-chenxiangyang/hkang/soft
+export GAUSS_SCRDIR=/lustre/home/acct-chenxiangyang/hkang/soft/g16/scratch
+source $g16root/g16/bsd/g16.profile
+
+# 执行高斯任务
+g16 $input_file
+EOF
+

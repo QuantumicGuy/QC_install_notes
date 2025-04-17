@@ -1,0 +1,33 @@
+--- # PES
+    A: [CuL-I + 1A + 2A +3A, CuL-Bpin + 1A + I-Bpin +3A, IM1-RSR + I-Bpin +3A, TS1-RSR + I-Bpin +3A, IM2-RSR + I-Bpin +3A, IM3-RSR + I-Bpin, TS2-RSR + I-Bpin, IM4-RSR + I-Bpin, 4A-RSR + CuL-I + I-Bpin]
+
+
+--- # SPECIES
+    CuL-I     : CuL-I*
+    2A      : 2A*
+    1A     : 1A*
+    3A      : 3A*
+    4A-RSR      : 4A-RSR*
+    4A-RSR-H      : 4A-RSR-H*
+    CuL-Bpin     : CuL-Bpin*
+    I-Bpin     : I-Bpin*
+    IM1-RSR      : IM1-RSR*
+    TS1-RSR     : TS1-RSR*
+    IM2-RSR      : IM2-RSR*
+    IM3-RSR     : IM3-RSR*
+    IM4-RSR     : IM4-RSR*
+    TS2-RSR        : TS2-RSR*
+
+
+
+
+--- # FORMAT
+    dec :  1 
+    legend : False
+    color : black,#26a6a4
+    pointlabel : False 
+    gridlines: True
+    show_conformers: True
+    show_gconf: False
+    dpi : 400
+    title: Potential Energy Surface

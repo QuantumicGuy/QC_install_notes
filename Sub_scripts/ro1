@@ -1,0 +1,59 @@
+#!/bin/bash 
+
+# 提取输入的gjf文件名
+input_file="$1"
+
+# 检查输入文件是否存在
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+# 提取文件名（不包括路径和扩展名）
+filename=$(basename -- "$input_file")
+filename_no_ext="${filename%.*}"
+
+# 定义临时工作目录路径
+scratch_dir="$SCRATCH/ORCA/${filename_no_ext}_$(date +%Y%m%d%H%M)" # 年月日时分格式
+
+# 创建临时工作目录
+mkdir -p "$scratch_dir"
+
+# 复制输入文件到临时工作目录
+cp "$input_file" "$scratch_dir"
+
+# 输出当前作业的信息
+echo "The job is: ${filename_no_ext}"
+echo "Temporary working directory: $scratch_dir"
+
+# 提交任务到Slurm
+sbatch << EOF
+#!/bin/bash
+#SBATCH -J ${filename_no_ext}
+#SBATCH -N 1
+#SBATCH -n 10
+#SBATCH -p cpu
+#SBATCH -o ${filename_no_ext}.out
+
+# 环境变量设置
+export PATH=/lustre/home/acct-chenxiangyang/share/software/ORCA601:$PATH
+export LD_LIBRARY_PATH=/lustre/home/acct-chenxiangyang/share/software/ORCA601:$LD_LIBRARY_PATH
+export ORCA=/lustre/home/acct-chenxiangyang/share/software/ORCA601/orca
+export PATH=/lustre/home/acct-chenxiangyang/share/software/openmpi-4.1.6/bin:$PATH
+export LD_LIBRARY_PATH=/lustre/home/acct-chenxiangyang/share/software/openmpi-4.1.6/lib:$LD_LIBRARY_PATH
+
+# 切换到临时工作目录
+cd "$scratch_dir"
+
+# 运行ORCA计算
+/lustre/home/acct-chenxiangyang/share/software/ORCA601/orca $input_file > ${filename_no_ext}.out
+
+# 将输出文件实时同步到提交作业目录
+rsync -a ${filename_no_ext}.out $(pwd)/
+
+# 作业完成后，将所有文件搬回提交目录
+rsync -a "$scratch_dir/" $(pwd)/
+
+# 清理临时工作目录
+rm -rf "$scratch_dir"
+EOF

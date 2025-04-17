@@ -1,0 +1,56 @@
+#!/bin/csh
+
+set WORK_DIR = ${PWD}
+set JOB_NAME=$1:r
+set SBATCH_SCRIPT = ${JOB_NAME}.sh
+set outfile = ${JOB_NAME}.info
+set errfile = ${JOB_NAME}.err
+
+# BUILD THE SBATCH_SCRIPT FILE
+cat << EOF > ${WORK_DIR}/${SBATCH_SCRIPT}
+#!/bin/bash
+#SBATCH -J $JOB_NAME
+#SBATCH -N 1
+#SBATCH --exclusive
+#SBATCH -n 20
+#SBATCH -p cpu
+#SBATCH -o $JOB_NAME.log
+
+#Please give the name of the INPUT_FILE, such as test(.chm)
+INPUT_FILE=$JOB_NAME
+
+# Gaussian16 C01 #
+export g16root=/lustre/home/acct-chenxiangyang/hkang/soft
+export GAUSS_SCRDIR=/lustre/home/acct-chenxiangyang/hkang/soft/g16/scratch
+source $g16root/g16/bsd/g16.profile
+export RSH_COMMAND="/usr/bin/ssh -x"
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /lustre/home/acct-chenxiangyang/\$USER ]; then
+  mkdir -p /lustre/home/acct-chenxiangyang/\$USER
+fi
+if [ ! -d /lustre/home/acct-chenxiangyang/\$USER/scr ]; then
+  mkdir -p /lustre/home/acct-chenxiangyang/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /lustre/home/acct-chenxiangyang/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \${PWD}/${JOB_NAME}.* .
+
+echo "Job started from \${SLURM_SUBMIT_HOST}, running on `hostname`" >> $outfile 
+echo "Job execution start: `date`" >> $outfile
+echo "SLURM Job ID is: \${SLURM_JOBID}" >> $outfile
+cat \$SLURM_JOB_NODELIST >> $outfile
+g16  $1
+cp \$tmpdir/* \${PWD}/
+
+rm -rf \$tmpdir
+EOF
+
+#
+# Now submit it to the SLURM queue batch
+#
+sbatch -m n ${WORK_DIR}/${SBATCH_SCRIPT}
+
+

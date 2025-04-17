@@ -1,0 +1,43 @@
+﻿#!/bin/bash
+
+# 提取输入的gjf文件名
+input_file="$1"
+
+# 检查输入文件是否存在
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+# 提取文件名（不包括路径和扩展名）
+filename=$(basename -- "$input_file")
+filename_no_ext="${filename%.*}"
+
+# 设置路径变量
+export PATH=$PATH:/lustre/home/acct-chenxiangyang/chenxiangyang-user1/software/xtb/xtb-dist/bin
+export XTBPATH=/lustre/home/acct-chenxiangyang/chenxiangyang-user1/software/xtb/xtb-dist/share/xtb
+
+# 输出当前作业的信息
+echo "The job is: ${filename_no_ext}"
+
+# 提交任务到Slurm
+sbatch << EOF
+#!/bin/bash
+#SBATCH --job-name=${filename_no_ext}
+#SBATCH -N 1
+#SBATCH --exclusive
+#SBATCH --ntasks-per-node=10
+#SBATCH --mem=10G
+#SBATCH -p cpu
+#SBATCH -o ${filename_no_ext}.log
+
+# 进入工作目录
+cd $(pwd)
+
+# xtb
+export PATH=$PATH:/lustre/home/acct-chenxiangyang/share/software/xtb/xtb-dist/bin
+
+# 执行crest任务
+/lustre/home/acct-chenxiangyang/share/software/xtb/xtb-dist/bin/crest $input_file --rthr 0.5 --cmetal --chrg 0 --uhf 0 --noreftopo --pccap 20 
+EOF
+

@@ -1,0 +1,81 @@
+#!/bin/csh
+
+set WORK_DIR = ${PWD}
+# job descritpion in amber9: filename before last period
+set JOB_NAME=$1:r
+set JOB_OUT=${JOB_NAME}.out
+# job name=dir tree + datetime + job description
+set QSUB_SCRIPT = ${JOB_NAME}.sh
+set outfile = ${JOB_NAME}.info
+set errfile = ${JOB_NAME}.err
+
+# BUILD THE QSUB_SCRIPT FILE
+cat << EOF > ${WORK_DIR}/${QSUB_SCRIPT}
+#!/bin/bash
+#PBS -l nodes=1:ppn=32
+#PBS -q small
+#PBS -N $JOB_NAME
+#PBS -j oe
+
+#Please give the name of the INPUT_FILE, such as test(.chm)
+INPUT_FILE=$JOB_NAME
+
+#### env ####
+
+
+# mokit
+export MOKIT_ROOT=/public/home/xlshi/soft/mokit
+export PATH=$MOKIT_ROOT/bin:\$PATH
+export PYTHONPATH=$MOKIT_ROOT/lib:\$PYTHONPATH
+#export ORCA=/public/home/xlshi/soft/ORCA-5.0.4/orca
+#export GMS=/public/home/xlshi/soft/gamess/rungms
+#alias gms='/public/home/xlshi/soft/gamess/rungms'
+# cint_and_xc_pyscf-1.7.6
+export LD_LIBRARY_PATH=/public/home/xlshi/soft/cint_and_xc/lib:\$LD_LIBRARY_PATH
+# pyscf-1.7.6
+export PYTHONPATH=/public/home/xlshi/soft/pyscf-1.7.6:\$PYTHONPATH
+# g16C01
+export g16root=/public/home/xlshi/soft
+source $g16root/g16/bsd/g16.profile
+export GAUSS_SCRDIR=/public/home/xlshi/scr
+export RSH_COMMAND="/usr/bin/ssh -x"
+# ORCA-5.0.4
+export PATH=/public/home/xlshi/soft/ORCA-5.0.4:\$PATH
+export LD_LIBRARY_PATH=/public/home/xlshi/soft/ORCA-5.0.4:\$LD_LIBRARY_PATH
+#export ORCA=/public/home/xlshi/soft/ORCA-5.0.4/orca
+alias orca='/public/home/xlshi/soft/ORCA-5.0.4/orca'
+# openmpi411
+export PATH=/public/home/xlshi/soft/openmpi-4.1.1/bin:\$PATH
+export LD_LIBRARY_PATH=/public/home/xlshi/soft/openmpi-4.1.1/lib:\$LD_LIBRARY_PATH
+
+
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /public/home/\$USER ]; then
+  mkdir -p /public/home/\$USER
+fi
+if [ ! -d /public/home/\$USER/scr ]; then
+  mkdir -p /public/home/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /public/home/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \$PBS_O_WORKDIR/${JOB_NAME}.* .
+
+echo "Job started from \${PBS_O_HOST}, running on `hostname`" >> $outfile 
+echo "Job execution start: `date`" >> $outfile
+echo "PBS Job ID is: \${PBS_JOBID}" >> $outfile
+cat \$PBS_NODEFILE >> $outfile
+automr $1 > $JOB_OUT
+cp \$tmpdir/* \$PBS_O_WORKDIR/
+
+rm -rf \$tmpdir
+EOF
+
+#
+# Now submit it to the PBS queue batch
+#
+qsub -m n ${WORK_DIR}/${QSUB_SCRIPT}
+
+######chmod +x 然后加到PATH里，比如subg16，然后subg16 my.gjf 就能给PBS交作业了

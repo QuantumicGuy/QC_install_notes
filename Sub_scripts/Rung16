@@ -1,0 +1,49 @@
+﻿#!/bin/bash
+
+# 设置Slurm相关参数
+#SBATCH --job-name=test
+#SBATCH --partition=cpu
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=40   
+#SBATCH --output=output_%j.out
+
+# 进入高斯工作目录
+cd $(pwd)
+
+# 循环提交任务
+for input_file in *.gjf; do
+    # 提取文件名（不包括路径和扩展名）
+    filename=$(basename -- "$input_file")
+    filename_no_ext="${filename%.*}"
+    # 输出当前作业的Slurm作业ID和节点列表信息
+    echo "The job" $SLURM_JOB_ID "is running on" $SLURM_JOB_NODELIST
+    # 提交任务到Slurm
+    sbatch << EOF
+#!/bin/bash
+#SBATCH --job-name=${filename_no_ext}
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=40
+#SBATCH --time=24:00:00
+#SBATCH --partition=cpu
+#SBATCH --output=${filename_no_ext}.log
+
+# 进入高斯工作目录
+cd $(pwd)
+
+# bin #   
+export PATH="$PATH:$HOME/bin"
+
+# g16 #
+export g16root=/lustre/home/acct-chenxiangyang/share/software
+export GAUSS_SCRDIR=$g16root/tmp
+. $g16root/g16/bsd/g16.profile
+export PATH=$PATH:$g16root/g16
+
+# 执行高斯任务
+g16 $input_file
+EOF
+
+done
+
+
+

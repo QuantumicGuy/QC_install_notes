@@ -1,0 +1,36 @@
+--- # PES
+# Double S addition  
+    2CuL-I+B2pin2---2CuL-Bpin+2I: [CuL-I+CuL-I+B2pin2, CuL-Bpin+CuL-Bpin+I+I]
+    CuL-I+B2pin2---CuL-Bpin+I-Bpin: [CuL-I+B2pin2, CuL-Bpin+I-Bpin]
+
+    Arylation: [CuL-Bpin+1A+2A, IM1+2A, TS1+2A, IM2+2A, TS2, 3A+CuL-I]
+    
+
+--- # SPECIES
+    CuL-I     :   CuL-I
+    B2pin2    :   B2pin2
+    I-Bpin    :   I-Bpin
+    CuL-Bpin  :   CuL-Bpin
+    I         :   I-anion
+    1A        :   1A
+    2A        :   2A
+    3A        :   3A-RSR
+
+    IM1       :   IM1-RSR
+    TS1       :   TS1-RSR
+    IM2       :   IM2-RSR
+    TS2       :   TS2-RSR
+
+
+
+--- # FORMAT
+    dec :  1 
+    nits: kcal|mol
+    legend : False
+    color : black,#26a6a4
+    pointlabel : False 
+    gridlines: True
+    show_conformers: True
+    show_gconf: False
+    dpi : 400
+    title: Potential Energy Surface

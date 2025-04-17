@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# 提取输入的gjf文件名
+input_file="$1"
+
+# 检查输入文件是否存在
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+# 提取文件名（不包括路径和扩展名）
+filename=$(basename -- "$input_file")
+filename_no_ext="${filename%.*}"
+
+# 输出当前作业的信息
+echo "The job is: ${filename_no_ext}"
+
+# 提交任务到Slurm
+sbatch << EOF
+#!/bin/bash
+#SBATCH -J ${filename_no_ext}
+#SBATCH -N 1
+#SBATCH --exclusive
+#SBATCH --ntasks-per-node=20
+#SBATCH -p cpu
+#SBATCH -o ${filename_no_ext}.out
+
+
+cd $(pwd)
+
+# ORCA-5.0.3 #
+export PATH=/lustre/home/acct-chenxiangyang/hkang/soft/orca503:$PATH
+export LD_LIBRARY_PATH=/lustre/home/acct-chenxiangyang/hkang/soft/orca503:$LD_LIBRARY_PATH
+export ORCA=/lustre/home/acct-chenxiangyang/hkang/soft/orca503/orca
+alias orca='/lustre/home/acct-chenxiangyang/hkang/soft/orca503/orca'
+# openmpi-4.1.1-gcc-9.3.0
+export PATH=/lustre/home/acct-chenxiangyang/hkang/soft/openmpi-4.1.1/bin:$PATH
+export LD_LIBRARY_PATH=/lustre/home/acct-chenxiangyang/hkang/soft/openmpi-4.1.1/lib:$LD_LIBRARY_PATH
+
+
+/lustre/home/acct-chenxiangyang/hkang/soft/orca503/orca $input_file > ${filename_no_ext}.out
+EOF
+

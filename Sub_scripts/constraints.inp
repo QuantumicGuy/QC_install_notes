@@ -1,0 +1,8 @@
+$constrain
+  force constant=0.5
+  distance: 2, 131, 2.765
+  distance: 45, 47, 2.361
+  distance: 45, 46, 2.290
+  distance: 45, 2, 2.002
+  reference=TS2_Trans-RSR-IM2-RSR-CC-scan1-scan1.xyz
+$end
