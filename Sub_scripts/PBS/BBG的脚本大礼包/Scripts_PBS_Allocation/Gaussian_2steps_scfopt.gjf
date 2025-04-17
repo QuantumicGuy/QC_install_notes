@@ -1,0 +1,17 @@
+%mem=160GB
+%nprocshared=56
+%chk=3.chk
+#p stable=opt scrf=(solvent=dichloromethane) uwb97xd/6-31g(d)
+
+stable_3
+
+0 2
+ H                 -1.20399000    0.10912700   -2.16914400
+
+
+--link1--
+%mem=180GB
+%nprocshared=56
+%chk=3.chk
+#p td=(nstates=30) scrf=(solvent=dichloromethane) uwb97xd/6-31g(d) guess=read geom=allcheck
+

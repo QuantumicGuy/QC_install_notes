@@ -1,0 +1,161 @@
+#!/bin/bash
+#PBS -N xtb-MD
+#PBS -l nodes=1:ppn=14
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=ADH-a.xyz             # input file name
+ini_temp=1000                  # initial temperature (K)
+total_time=200                # total simulation time (ps)
+dump_time=50                  # interval for trajectory printout (fs)
+metal=27                  # the number of metal atom
+atom="10 11 37 38"                   # the numbers of coordination atom
+broken_threshold=10              # the threshold (Å) used to judge whether bonds have been dissociated
+temp_range=2                 # the acceptable temperature range for decomposition
+
+function xtb_run(){
+export OMP_NUM_THREADS=32     # CPU cores
+export OMP_STACKSIZE=3g    # memory
+ulimit -s unlimited
+
+xtb $FILENAME --input md.in --omd --chrg 2 --uhf 0 --gfn 1 > ${FILENAME/%xyz/log}    # running xtb-6.3.3
+
+# task types: --sp --grad --opt [level] --hess --ohess [level] --md --omd
+# solvent: --gbsa [solvent]  --alpb [solvent]
+# charge: --chrg [value]
+# unpaired electrons: --uhf [value]
+# conversion: --molden 
+# GFN2-xTB (default) / GFN1-xTB / GFN0-xTB : --gfn [value]
+# convergence thresholds:  OPT:  --cycles [value]    SCC:  --iterations [value]
+# Fermi-smearing: --etemp <REAL>
+# difficulties of SCC convergence: xtb --etemp 1000.0 coord && xtb --restart coord
+}
+
+function mdin_make(){
+cat << EOF > md.in 
+\$md
+   temp=$ini_temp        # in K, thermostat temperature
+   time=$total_time        # in ps, total run time of simulation
+   dump=$dump_time         # in fs, interval for trajectory printout
+   step=1.0        # in fs, time step for propagation
+   velo=false      # also write out velocities
+   nvt=true        # perform simulation in NVT ensemble
+   hmass=1         # do not change mass of hydrogens (default:4 times)
+   shake=1         # use SHAKE algorithm to constrain bonds 0 = off, 1 = X-H only, 2 = all bonds
+   sccacc=2.0      # accuracy of xTB calculation in dynamics
+   restart=false   # read velocities from "mdrestart"
+\$end
+EOF
+}
+
+function trj_monitor(){
+total_atoms=$(sed -n "1p" xtb.trj)
+last_matching_line=$(grep -n "^$total_atoms" xtb.trj | tail -1 | cut -d : -f 1)
+metal_line=$[${last_matching_line}+1+${metal}]
+metal_x=$(sed -n "${metal_line}p" xtb.trj | awk '{print $2}')
+metal_y=$(sed -n "${metal_line}p" xtb.trj | awk '{print $3}')
+metal_z=$(sed -n "${metal_line}p" xtb.trj | awk '{print $4}')
+for i in $atom;do
+atom_line=$[${last_matching_line}+1+${i}]
+atom_x=$(sed -n "${atom_line}p" xtb.trj | awk '{print $2}')
+atom_y=$(sed -n "${atom_line}p" xtb.trj | awk '{print $3}')
+atom_z=$(sed -n "${atom_line}p" xtb.trj | awk '{print $4}')
+d_metal_atom[$i]=$(echo "scale=8; sqrt((${atom_x} - ${metal_x})^2+(${atom_y} - ${metal_y})^2+(${atom_z} - ${metal_z})^2)" | bc | awk '{printf "%.4f", $0}')    # distance of two atoms (Å)
+echo "d_metal_atom[$i]= ${d_metal_atom[$i]}"
+done
+for i in ${d_metal_atom[@]};do
+  if [[ $(echo "$i > $broken_threshold" | bc) ==  1 ]];then
+    echo ">>>  bond breaks! [> $broken_threshold Å]  <<<"  
+	bond_broken=1
+    break
+  else 
+    bond_broken=0
+  fi	
+done
+}
+
+function file_clean(){
+mkdir scoords_${temp}K
+cp md.in scoords_${temp}K/
+mv scoord.* mdrestart xtbrestart scoords_${temp}K/
+mv ${FILENAME/%xyz/log} scoords_${temp}K/${FILENAME/%xyz/log}
+mv xtb.trj trj_${FILENAME%.xyz}_${temp}K_${total_time}ps.xyz
+rm wbo .xtboptok charges xtbopt.* xtbmdok
+}
+
+
+
+#####################   temperature searching script begins from the following lines   ######################
+temp=$ini_temp
+mdin_make
+echo "temp= ${temp}K"
+temp_array[${#temp_array[@]}]=$temp
+xtb_run
+wait
+trj_monitor
+file_clean
+ini_bond_broken=$bond_broken
+if [[ $ini_bond_broken == 1 ]];then
+  while [[ $bond_broken == 1 ]];do
+    upper_temp=$temp
+    temp=$[$temp-100]
+    echo "temp= ${temp}K"
+	temp_array[${#temp_array[@]}]=$temp
+    sed -i "s/temp=.*        #/temp=$temp        #/" md.in     #  Modify the md.in file  
+    xtb_run
+    wait
+    trj_monitor
+    file_clean
+    lower_temp=$temp
+  done
+elif [[ $ini_bond_broken == 0 ]];then 
+  while [[ $bond_broken == 0 ]];do
+    lower_temp=$temp 
+    temp=$[$temp+100]
+	echo "temp= ${temp}K"
+	temp_array[${#temp_array[@]}]=$temp
+    sed -i "s/temp=.*        #/temp=$temp        #/" md.in     #  Modify the md.in file  
+    xtb_run
+    wait
+    trj_monitor
+    file_clean
+    upper_temp=$temp
+  done
+fi
+
+delta_temp=$[${upper_temp}-${lower_temp}]
+while [[ $(echo "$delta_temp > $temp_range" | bc) == 1 ]];do
+  temp=$[($lower_temp+$upper_temp)/2]
+  sed -i "s/temp=.*        #/temp=$temp        #/" md.in     #  Modify the md.in file
+  echo "temp= ${temp}K"
+  temp_array[${#temp_array[@]}]=$temp  
+  xtb_run
+  wait
+  trj_monitor
+  file_clean
+  if [[ $bond_broken == 1 ]];then
+    upper_temp=$temp
+  elif [[ $bond_broken == 0 ]];then
+    lower_temp=$temp
+  fi
+  delta_temp=$[$upper_temp-$lower_temp]
+done
+for i in ${temp_array[@]};do
+  if [[ $i == $upper_temp || $i == $lower_temp ]];then
+    continue
+  else
+    rm -rf scoords_${i}K trj_${FILENAME%.xyz}_${i}K_${total_time}ps.xyz
+  fi
+done
+rm md.in
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

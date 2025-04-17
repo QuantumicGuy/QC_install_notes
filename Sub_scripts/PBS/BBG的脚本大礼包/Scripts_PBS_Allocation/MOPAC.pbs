@@ -1,0 +1,22 @@
+#!/bin/bash
+#PBS -N MOPAC
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=test.mop   # input file name
+
+MOPAC2016.exe $FILENAME   # running MOPAC2016
+echo -e "${FILENAME/%mop/out}\n1" | mopac2xyz  # generate the opt_traj.xyz file, 1 means outputting one frame every 1 frame.
+mv ${FILENAME/%mop/xyz} opt_traj.xyz
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

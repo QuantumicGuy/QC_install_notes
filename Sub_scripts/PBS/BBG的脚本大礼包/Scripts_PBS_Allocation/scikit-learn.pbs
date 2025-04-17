@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N scikit-learn
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=1440:00:00
+#PBS -q AMD
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=TAND_ElasticNet.py  # input file name
+
+stdbuf -oL python3 -u ${FILENAME} &> ${FILENAME/%.py/_CV.log} # running python script
+grep -vE "Trial .* finished with value" ${FILENAME/%.py/_CV.log} > ${FILENAME/%.py/.log}
+
+
+# python3 -u ${FILENAME} |& stdbuf -oL tee ${FILENAME/%py/tmp} | stdbuf -oL awk 'BEGIN{a=100000000}{if($0 ~ "totalling"){a=$10;i=0;print $0}if($0 ~ "\\[CV\\]"){i++;printf "<%5.2f%%> %s\n",i/a*100, $0}}'> ${FILENAME/%.py/_CV.log} # running python script
+# grep -v "\[CV\]" ${FILENAME/%py/tmp} > ${FILENAME/%py/log}
+# rm ${FILENAME/%py/tmp}
+
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID
+

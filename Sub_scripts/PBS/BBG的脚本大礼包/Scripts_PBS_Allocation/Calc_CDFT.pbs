@@ -1,0 +1,21 @@
+#!/bin/bash
+#PBS -N Calc_CDFT
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=Calc_CDFT_Scripts.sh   # input file name
+
+echo -e "fchk\n\n" | bash $FILENAME > ${FILENAME/%sh/log}
+
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N ORCA
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=test.inp   # input file name
+
+/home/yjy/softwares/orca-5.0.3/orca $FILENAME > ${FILENAME/%inp/log}  # running ORCA-5.0.3
+
+#wait
+#OfakeG ${FILENAME/%inp/log}
+#wait
+#orca_2mkl ${FILENAME%.inp} -molden
+#wait
+#mv ${FILENAME/%inp/molden.input} ${FILENAME/%inp/molden}
+#rm ${FILENAME/%inp/gbw}
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

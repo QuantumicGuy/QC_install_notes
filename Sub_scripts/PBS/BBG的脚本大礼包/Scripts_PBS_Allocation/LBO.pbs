@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N Gaussian
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q AMD
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=TBBS-S4-NR.fchk   # input file name
+
+Multiwfn $FILENAME  <<EOF > LBO_${FILENAME/%fchk/txt}  # running Multiwfn
+9
+8
+n
+0
+q
+EOF
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -N ASE_xtb
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+export OMP_NUM_THREADS=32     # CPU cores
+export OMP_STACKSIZE=3g    # memory
+export XTBPATH=/home/yjy/softwares/xtb_6.3.pre2/share/xtb
+ulimit -s unlimited
+source /home/yjy/intel/parallel_studio_xe_2020/psxevars.sh
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=ASE_xtb.py  # input file name
+
+python3 -u ${FILENAME} ${FILENAME%.py} > ${FILENAME/%py/log} # running python script
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID

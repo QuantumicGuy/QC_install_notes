@@ -1,0 +1,13 @@
+#!/bin/bash
+#PBS -N backup
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q AMD
+#PBS -o jobID.$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+tar -Jcvf softwares_211213_AMD32.xz softwares
+tar -Jcvf backup_softwares_211213_AMD32.xz backup_softwares
+

@@ -1,0 +1,25 @@
+! B3LYP D3 def2-TZVPP def2/J RIJCOSX strongSCF noautostart SCFConvForced TRAH nopop
+%maxcore  3000
+%pal nprocs   56 end
+%scf MaxIter 400 end
+%scf DirectResetFreq 1 end
+%scf
+STABPerform true
+STABRestartUHFifUnstable true
+STABDTol 0.00001
+STABRTol 0.00001
+end
+* xyz   0   2
+H      6.63964700    3.04271300    2.09893000
+ *
+
+
+$new_job
+! PWPB95 D3 def2-TZVPP def2/J def2-TZVPP/C RIJCOSX tightSCF SCFConvForced nopop NOTRAH KDIIS
+%maxcore  3000
+%pal nprocs   56 end
+%scf MaxIter 400 end
+%scf DirectResetFreq 1 end
+* xyz   0   2
+H      6.63964700    3.04271300    2.09893000
+ *

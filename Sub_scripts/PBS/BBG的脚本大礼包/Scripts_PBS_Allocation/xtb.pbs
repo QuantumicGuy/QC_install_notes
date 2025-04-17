@@ -1,0 +1,43 @@
+#!/bin/bash
+#PBS -N xtb
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+export OMP_NUM_THREADS=32     # CPU cores
+export OMP_STACKSIZE=3g       # memory
+ulimit -s unlimited
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=test.xyz   # input file name
+
+xtb $FILENAME --chrg 0 --uhf 0 --ohess --gfn 0 > ${FILENAME/%xyz/log} # running xtb-6.5.0
+
+mv xtbopt.log ${FILENAME%.xyz}_traj.xyz
+mv xtbopt.xyz ${FILENAME%.xyz}_opted.xyz
+mv xtbrestart ${FILENAME%.xyz}_xtbrestart
+rm wbo charges
+
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID
+
+# task types: --sp --grad --opt [level] --hess --ohess [level] --md --omd
+# solvent: --gbsa [solvent]  --alpb [solvent]
+# charge: --chrg [value]
+# unpaired electrons: --uhf [value]
+# conversion: --molden 
+# GFN2-xTB (default) / GFN1-xTB / GFN0-xTB : --gfn [value]
+# convergence thresholds:  OPT:  --cycles [value]    SCC:  --iterations [value]
+# Fermi-smearing: --etemp <REAL>
+# difficulties of SCC convergence: xtb --etemp 1000.0 coord && xtb --restart coord
+
+
+

@@ -1,0 +1,23 @@
+#!/bin/bash
+#PBS -N Gaussian
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=test.gjf   # input file name
+
+g16 $FILENAME   # running gaussian 16
+formchk ${FILENAME/%gjf/chk}
+rm ${FILENAME/%gjf/chk}
+7za a ${FILENAME/%gjf/7z} ${FILENAME/%gjf/fchk}
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID
