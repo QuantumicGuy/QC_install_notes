@@ -1,0 +1,26 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=4 #节点数，每个节点核数
+#PBS -q q2013 #队列名
+#PBS -o TESTING #可选设置，标准输出输出文件
+#PBS -l walltime=600:00:00 #墙钟限制
+#PBS -N g09.pbs #可选设置，作业名
+#PBS -j oe
+#PBS -V #可选设置，复制用户环境变量
+
+g09root="/share/apps/gauss/g09"
+mkdir -p /state/partition1/scratch/"$PBS_JOBID"
+GAUSS_SCRDIR="/state/partition1/scratch/$PBS_JOBID"
+export g09root GAUSS_SCRDIR
+. $g09root/g09/bsd/g09.profile
+
+cp -rf $PBS_O_WORKDIR/$x $GAUSS_SCRDIR
+cd $GAUSS_SCRDIR
+g09 $x 
+formchk *.chk
+#mv *.log *.fchk $PBS_O_WORKDIR
+mv *.log *.chk *.fchk *.rwf *.wfn *.cub $PBS_O_WORKDIR
+rm -rf $GAUSS_SCRDIR
+
+#提交：qsub -b x=test.gjf g09.pbs
+
+
