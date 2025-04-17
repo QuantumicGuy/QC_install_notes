@@ -1,0 +1,1 @@
+tachyon_WIN32.exe vmdscene.dat -format BMP -o VMDrender_noshadow.png -res 2000 1500 -numthreads 8 -aasamples 24 -mediumshade -shadow_filter_off

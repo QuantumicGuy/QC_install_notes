@@ -1,0 +1,1 @@
+tachyon_WIN32.exe vmdscene.dat -format BMP -o ZZZVMDrender_high.png -res 2000 2000 -numthreads 18 -aasamples 48 -shadow_filter_off
