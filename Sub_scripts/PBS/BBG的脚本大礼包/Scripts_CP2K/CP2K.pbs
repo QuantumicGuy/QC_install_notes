@@ -1,0 +1,24 @@
+#!/bin/bash
+#PBS -N CP2K
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q AMD
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+source /home/yjy/softwares/gcc9/env.sh
+source /home/yjy/intel/parallel_studio_xe_2020/psxevars.sh
+source /home/yjy/softwares/cp2k-9.1/tools/toolchain/install/setup
+
+FILENAME=test.inp   # input file name
+
+mpirun -np 16 cp2k.popt $FILENAME > ${FILENAME/%inp/log} # running cp2k
+
+
+
