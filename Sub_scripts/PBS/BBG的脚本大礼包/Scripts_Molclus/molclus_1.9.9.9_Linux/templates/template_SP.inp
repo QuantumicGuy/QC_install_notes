@@ -1,0 +1,6 @@
+! wB97M-V def2-TZVP def2/J RIJCOSX SCFConvForced NOTRAH noautostart miniprint nopop
+%maxcore 3000
+%pal nprocs  32 end
+* xyz 0 1 
+[GEOMETRY]
+*

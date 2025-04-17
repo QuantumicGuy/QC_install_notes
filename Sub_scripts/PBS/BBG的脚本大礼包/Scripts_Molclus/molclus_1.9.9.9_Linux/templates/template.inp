@@ -1,0 +1,6 @@
+! DLPNO-CCSD(T) normalPNO RIJK def2-QZVPP def2/JK def2-QZVPP/C tightSCF noautostart miniprint nopop SCFConvForced NOTRAH
+%maxcore 3000
+%pal nprocs  32 end
+* xyz 0 1 
+[GEOMETRY]
+*

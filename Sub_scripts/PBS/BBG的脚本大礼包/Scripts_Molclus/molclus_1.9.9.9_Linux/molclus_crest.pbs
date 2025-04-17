@@ -1,0 +1,57 @@
+#!/bin/bash
+#PBS -N isostat_crest
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+function conformation_gen(){
+cd gentor
+echo -e "\n" | ./gentor                     			 
+cp traj.xyz ../
+cd ..
+}
+function configuration_gen(){
+cd genmer
+echo -e "\n" | ./genmer
+cp traj.xyz ../
+cd ..
+}
+
+export OMP_NUM_THREADS=56     # CPU cores for xtb
+export OMP_STACKSIZE=3g       # memory for xtb
+ulimit -s unlimited
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+chmod +x ./molclus            # add executable permission
+chmod +x ./isostat
+chmod +x ./gentor/gentor
+chmod +x ./genmer/genmer
+
+#conformation_gen                      # generate initial geometries (traj.xyz) by gentor
+#configuration_gen                      # generate initial configurations (traj.xyz) by genmer
+
+
+# Put the initial geometry file (traj.xyz) in the current working directory 
+# Use crest to optimize geometries at GFN-xTB level more efficiently
+crest -mdopt traj.xyz -chrg 0 -uhf 0 -gfn 1 -opt normal | tee ./results/crest_info.txt
+
+# Classify the optimized geometries into the clusters
+./isostat crest_ensemble.xyz -Edis 0.5 -Gdis 0.4 -T 298 -nt 32 > ./results/isostat_info_crest.txt	 
+
+# Usage notes for the isostat tool:
+# 比如执行isostat Rize.xyz -Nout 8 -Eout 2.4 -Edis 0.5 -Gdis 0.2 -T 350 -nt 32命令，代表将Rize.xyz 作为输入文件，往cluster.xyz里导出的簇是能量最低的8个且相对能量还必须在2.4 kcal/mol以内。使用0.5 kcal/mol和0.2埃分别作为归簇的能量和几何偏差判据。计算Boltzmann分布使用350K。使用32个线程并行计算。凡是通过命令行指定的参数就不需要在交互式界面里再输入。忘记这些选项怎么写的话可以随时运行isostat -h查看。
+
+rm coord coord.original struc.xyz
+
+# Move the cluster.xyz and crest_ensemble.xyz files to the ./results/* directory
+mv cluster.xyz ./results/cluster_xtb.xyz
+mv crest_ensemble.xyz ./results/crest_ensemble_xtb.xyz
+
+
+
+
+
+
+

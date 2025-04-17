@@ -1,0 +1,3 @@
+如果molclus在你的文章中被使用，必须进行引用，基本格式为（可根据期刊要求修改）：Tian Lu, molclus program, Version x.x, http://www.keinsci.com/research/molclus.html (accessed 月 日, 年)。我们在未来会专门发表论文对molclus进行介绍，届时会在molclus网页中提供文章信息，之后请引用论文而不要再只引用网址。
+
+English version：If molclus is utilized in your paper, the program must be cited, the basic format is (may be changed according to requirement of journal editor): Tian Lu, molclus program, Version x.x, http://www.keinsci.com/research/molclus.html (accessed month day, year). We plan to publish a paper to describe molclus program and then add corresponding information on the molclus webpage, at that time please cite the paper instead of only citing the website.

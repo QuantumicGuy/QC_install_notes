@@ -1,0 +1,50 @@
+#!/bin/bash
+#PBS -N xtb-MD
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+export OMP_NUM_THREADS=32     # CPU cores
+export OMP_STACKSIZE=3g    # memory
+ulimit -s unlimited
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+FILENAME=Remdesivir.xyz   # input file name
+
+# Generate the control file (md.in) for MD tasks
+cat << EOF > md.in  
+\$md
+   temp=400        # in K, thermostat temperature
+   time=100        # in ps, total run time of simulation
+   dump=50         # in fs, interval for trajectory printout
+   step=1.0        # in fs, time step for propagation
+   velo=false      # also write out velocities
+   nvt=true        # perform simulation in NVT ensemble
+   hmass=1         # do not change mass of hydrogens (default:4 times)
+   shake=1         # use SHAKE algorithm to constrain bonds 0 = off, 1 = X-H only, 2 = all bonds
+   sccacc=2.0      # accuracy of xTB calculation in dynamics
+   restart=false   # read velocities from "mdrestart"
+\$end
+EOF
+
+# Run the xtb
+xtb $FILENAME --input md.in --omd --chrg 0 --uhf 0 --gfn 0 > ${FILENAME/%xyz/out}
+wait
+rm scoord.*
+cp *.trj ../traj.xyz
+
+# task types: --sp --grad --opt [level] --hess --ohess [level] --md --omd
+# solvent: --gbsa [solvent]  --alpb [solvent]
+# charge: --chrg [value]
+# unpaired electrons: --uhf [value]
+# conversion: --molden 
+# GFN2-xTB (default) / GFN1-xTB / GFN0-xTB : --gfn [value]
+# convergence thresholds:  OPT:  --cycles [value]    SCC:  --iterations [value]
+# Fermi-smearing: --etemp <REAL>
+# difficulties of SCC convergence: xtb --etemp 1000.0 coord && xtb --restart coord
+
+
+

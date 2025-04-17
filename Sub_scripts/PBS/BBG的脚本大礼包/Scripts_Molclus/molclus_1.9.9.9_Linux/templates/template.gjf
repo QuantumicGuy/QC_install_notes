@@ -1,0 +1,9 @@
+%mem=90GB
+%nprocshared=32
+#p B3LYP/6-31G* em=GD3BJ opt freq
+
+Template file
+
+0 1
+[GEOMETRY]
+
