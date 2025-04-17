@@ -1,0 +1,26 @@
+mol new sl2r.cub
+mol addfile dg_inter.cub
+mol delrep 0 top
+mol representation CPK 0.7 0.3 22.0 22.0
+mol addrep top
+mol default color Element
+mol representation Isosurface 0.01 1 0 0 1 1
+mol color Volume 0
+mol addrep top
+mol scaleminmax top 1 -0.05 0.05
+color scale method BGR
+color Display Background white
+axes location Off
+display depthcue off
+display rendermode GLSL
+light 3 off
+material change specular Opaque 0.500000
+material change outline Opaque 4.000000
+material change outlinewidth Opaque 0.5
+mol modmaterial 1 0 Diffuse
+material change opacity Diffuse 0.7
+
+display depthcue on
+display cuemode Linear
+display cuestart 1.750000
+display cueend 3.000000
