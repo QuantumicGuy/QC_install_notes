@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N VASP
+#PBS -l nodes=1:ppn=56
+#PBS -l walltime=1440:00:00
+#PBS -q CPU
+#PBS -o jobID.$PBS_JOBID
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+source /home/yjy/intel/parallel_studio_xe_2020/psxevars.sh
+
+
+# mkdir -p ~/tmp/$PBS_JOBID
+# scp -r master:$PBS_O_WORKDIR/* ~/tmp/$PBS_JOBID
+# cd ~/tmp/$PBS_JOBID
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+
+mpirun -np 56 vasp_std > outputs.log  # running vasp.5.4.4
+
+# scp -r ~/tmp/$PBS_JOBID/* master:$PBS_O_WORKDIR
+# rm -rf ~/tmp/$PBS_JOBID
+
+
+

@@ -1,0 +1,72 @@
+# green-white, plastic, transparent, grayscale good
+proc ::vcube::Vapply_style {m_name} {
+	# set tachyon options
+    variable tachyon_options
+	set tachyon_options "-trans_raster3d"
+	#set tachyon_options ""
+	
+	#set direct light and ambient light
+	light 0 on
+	light 1 on
+	light 2 off
+	light 3 off
+	display shadows off
+    display ambientocclusion off
+	display aoambient 0.8
+	display aodirect 0.3
+	
+    # basis settings
+    color Display Background white
+    axes location Off
+    display depthcue off
+    display projection Orthographic
+    display rendermode GLSL
+	
+    # surface materials a
+    if {[lsearch [material list] ${m_name}a] < 0} {material add ${m_name}a}
+    set mprop  {ambient diffuse specular shininess mirror opacity outline outlinewidth transmode}
+    set mvalue {0.2     0.5      0.6       0.85       0.0    0.7     0.6     0.6          0.0}
+    foreach mp $mprop mv $mvalue {material change $mp ${m_name}a $mv} 
+    mol modmaterial 1 top ${m_name}a
+
+    # surface materials b
+    if {[lsearch [material list] ${m_name}b] < 0} {material add ${m_name}b}
+    set mprop  {ambient diffuse specular shininess mirror opacity outline outlinewidth transmode}
+    set mvalue {0.2     0.5      0.6       0.85       0.0    0.7     0.6     0.6          0.0}
+    foreach mp $mprop mv $mvalue {material change $mp ${m_name}b $mv} 
+    mol modmaterial 2 top ${m_name}b
+
+    # surface color
+    mol modcolor 1 top ColorID 31
+    mol modcolor 2 top ColorID 32    
+    color change rgb 31 0.95000 0.95000 0.95000
+    color change rgb 32 0.50000 0.90000 0.10000
+
+    # atom materials
+    if {[lsearch [material list] vcubeatom] < 0} {material add vcubeatom}
+    mol modstyle 0 top CPK 0.600000 0.400000 30.000000 30.000000
+    mol modmaterial 0 top vcubeatom
+    set mprop  {ambient diffuse specular shininess mirror opacity outline outlinewidth transmode}
+    set mvalue {0.1     0.5     0.1      0.3       0.0    1.0     0.5     0.9          0.0}
+    foreach mp $mprop mv $mvalue {material change $mp vcubeatom $mv} 
+
+    # atom color
+    mol modcolor 0 top Element
+    color Element C gray
+    color change rgb 2  0.600000 0.600000 0.600000
+    color Element H white
+    color Element S yellow
+    color change rgb 4  1.000000 0.800000 0.000000
+    color Element F yellow2
+    color change rgb 17  0.800000 1.000000 0.000000
+    color Element Cl yellow3
+    color change rgb 18  0.500000 1.000000 0.000000
+    color Element Br magenta2
+    color change rgb 28  0.900000 0.100000 0.000000
+    color Element I magenta
+    color change rgb 27  0.700000 0.000000 0.700000
+    color Element B pink
+    color change rgb 9   1.000000 0.400000 0.800000
+    color Element P red2
+    color change rgb 29   1.000000 0.400000 0.000000
+}
