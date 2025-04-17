@@ -1,0 +1,31 @@
+#!/bin/bash
+#PBS -N molclus_xtb
+#PBS -l nodes=1:ppn=32
+#PBS -l walltime=1440:00:00
+#PBS -q gentai
+#PBS -o jobID.$PBS_JOBID
+
+export OMP_NUM_THREADS=32     # CPU cores for xtb
+export MKL_NUM_THREADS=32     # CPU cores for xtb
+export OMP_STACKSIZE=3000m    # memory for xtb
+
+cd $PBS_O_WORKDIR
+touch jobID.$PBS_JOBID
+chmod +x ./molclus
+chmod +x ./isostat
+chmod +x ./gentor/gentor
+chmod +x ./genmer/genmer
+
+cd gentor
+echo "\n" | ./gentor                                              # generate initial input geometries
+wait
+mv traj.xyz ../
+cd ..
+mv settings1.ini settings.ini
+./molclus | tee info_xtb.txt                                         # start molclus with xtb
+wait
+mv settings.ini settings1.ini
+./isostat > summary_xtb.txt < isostat_xtb.ini         # Analyze and classify the optimized geometries into the clusters
+wait
+rm traj.xyz
+mv cluster.xyz cluster_xtb.xyz

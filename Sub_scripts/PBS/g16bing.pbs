@@ -1,0 +1,24 @@
+#!/bin/sh
+#PBS -N Gaussian
+#PBS -o job.log
+#PBS -e err.log
+#PBS -q yuan
+#PBS -l nodes=1:ppn=8
+#PBS -l mem=6000mb
+#PBS -l walltime=1440:00:00
+#PBS -j oe
+
+mkdir -p /tmp/$PBS_JOBID
+cp -r $PBS_O_WORKDIR/* /tmp/$PBS_JOBID
+cd /tmp/$PBS_JOBID
+
+INPUT_NAME=D3        ##这里输入文件名，不含拓展名##
+
+g09 $INPUT_NAME.com
+wait
+formchk $INPUT_NAME.chk
+wait
+rm -rf $INPUT_NAME.chk
+
+cp -r /tmp/$PBS_JOBID/*  $PBS_O_WORKDIR
+rm -rf /tmp/$PBS_JOBID

@@ -1,0 +1,64 @@
+#!/bin/csh
+
+set WORK_DIR = ${PWD}
+# job description in amber9: filename before last period
+set JOB_NAME=$1:r
+set JOB_OUT=${JOB_NAME}.out
+# job name=dir tree + datetime +job description
+set QSUB_SCRIPT = ${JOB_NAME}.sh
+set outfile = ${JOB_NAME}.info
+set errfile = ${JOB_NAME}.err
+
+# BUILD THE QSUB_SCRIPT FILE
+cat << EOF > ${WORK_DIR}/${QSUB_SCRIPT}
+#!/bin/bash
+#PBS -l nodes=1:ppn=32
+#PBS -q workq
+#PBS -N $JOB_NAME
+#PBS -j oe
+
+#Please give the name of the INPUT_FILE, such as test(.chm)
+INPUT_FILE=$JOB_NAME
+
+#### orca ####
+
+# ORCA-5.0.4
+export PATH=/share/home/kanghao/soft/ORCA-5.0.4:$PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/share/home/kanghao/soft/ORCA-5.0.4
+export ORCA=/share/home/kanghao/soft/ORCA-5.0.4/orca
+#$ORCA=orca
+alias orca='/share/home/kanghao/soft/ORCA-5.0.4/orca'
+# openmpi-4.1.1
+export PATH=/share/home/kanghao/soft/openmpi-4.1.1/bin:$PATH
+export LD_LIBRARY_PATH=/share/home/kanghao/soft/openmpi-4.1.1/lib:$LD_LIBRARY_PATH
+
+export RSH_COMMAND="/usr/bin/ssh -x"
+
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /share/home/\$USER ]; then
+  mkdir -p /share/home/\$USER
+fi
+if [ ! -d /share/home/\$USER/scr ]; then
+  mkdir -p /share/home/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /share/home/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \$PBS_0_WORKDIR/${JOB_NAME}.* .
+
+echo "Job started from \${PBS_0_HOST}, running on 'hostname'" >> $outfile
+echo "Job execution start: 'date'" >> $outfile
+echo "PBS Job ID is: \${PBS_JOBID}" >> $outfile
+cat \$PBS_NODEFILE >> $outfile
+/share/home/kanghao/soft/ORCA-5.0.4/orca $1 >& $JOB_OUT
+cp \$tmpdir/* \$PBS_O_WORKDIR/
+
+rm -rf \$tmpdir
+EOF
+
+#
+#Now submit it to the PBS queue batch
+#
+qsub ${WORK_DIR}/${QSUB_SCRIPT}

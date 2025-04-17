@@ -1,0 +1,17 @@
+#!/bin/bash
+#========================================#
+# PBS Job submission script for QE
+#========================================#
+
+#PBS -S /bin/bash
+#PBS -N qe
+#PBS -j oe
+#PBS -q Intel
+#PBS -l walltime=1440:00:00
+#PBS -l nodes=1:ppn=18
+#PBS -V
+
+cd ${PBS_O_WORKDIR}
+
+inf="name"
+mpirun -np 18 pw.x -i ${inf} &> ${inf//in/out}

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+export FILE_NAME=$1
+cat << EOF > ${FILE_NAME}.sub
+#SBATCH -J orca
+#SBATCH -p xhacnormalb
+#SBATCH -N 1
+#SBATCH -n 64
+#SBATCH --mem=0
+module purge
+module load compiler/gnu/7.3.0
+module load mpi/openmpi/4.1.1-gcc7.3.0
+export LD_LIBRARY_PATH=/public/home/acz62t6srh/software/orca_5_0_3_linux_x86-64_shared_openmpi411:\$LD_LIBRARY_PATH
+echo "${FILE_NAME}"
+sed -i "/nprocs/c %pal nprocs   \$SLURM_NTASKS end" ${FILE_NAME}.inp
+/public/home/acz62t6srh/software/orca_5_0_3_linux_x86-64_shared_openmpi411/orca ${FILE_NAME}.inp > ${FILE_NAME}.out
+
+
+EOF
+sbatch ${FILE_NAME}.sub
+rm -f ${FILE_NAME}.sub

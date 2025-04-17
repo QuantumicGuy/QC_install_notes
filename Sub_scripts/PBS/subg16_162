@@ -1,0 +1,59 @@
+#!/bin/csh
+
+set WORK_DIR = ${PWD}
+# job descritpion in amber9: filename before last period
+set JOB_NAME=$1:r
+# job name=dir tree + datetime + job description
+set QSUB_SCRIPT = ${JOB_NAME}.sh
+set outfile = ${JOB_NAME}.info
+set errfile = ${JOB_NAME}.err
+
+# BUILD THE QSUB_SCRIPT FILE
+cat << EOF > ${WORK_DIR}/${QSUB_SCRIPT}
+#!/bin/bash
+#PBS -l select=1:ncpus=28
+#PBS -q workq
+#PBS -N $JOB_NAME
+#PBS -j oe
+
+#Please give the name of the INPUT_FILE, such as test(.chm)
+INPUT_FILE=$JOB_NAME
+
+#### g16 ####
+
+# Gaussian16 C01
+export g16root=/share/home/kanghao/soft
+source $g16root/g16/bsd/g16.profile
+export GAUSS_SCRDIR=/share/home/\$USER/scr/g16c01
+export RSH_COMMAND="/usr/bin/ssh -x"
+
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /share/home/\$USER ]; then
+  mkdir -p /share/home/\$USER
+fi
+if [ ! -d /share/home/\$USER/scr ]; then
+  mkdir -p /share/home/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /share/home/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \$PBS_O_WORKDIR/${JOB_NAME}.* .
+
+echo "Job started from \${PBS_O_HOST}, running on `hostname`" >> $outfile 
+echo "Job execution start: `date`" >> $outfile
+echo "PBS Job ID is: \${PBS_JOBID}" >> $outfile
+cat \$PBS_NODEFILE >> $outfile
+g16  $1
+cp \$tmpdir/* \$PBS_O_WORKDIR/
+
+rm -rf \$tmpdir
+EOF
+
+#
+# Now submit it to the PBS queue batch
+#
+qsub -m n ${WORK_DIR}/${QSUB_SCRIPT}
+
+######chmod +x 然后加到PATH里，比如subg16，然后subg16 my.gjf 就能给PBS交作业了

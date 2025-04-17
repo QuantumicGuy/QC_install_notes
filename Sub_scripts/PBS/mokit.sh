@@ -1,0 +1,61 @@
+#!/bin/bash
+#PBS -l nodes=1:ppn=32
+#PBS -q small
+#PBS -N mokit
+#PBS -j oe
+
+#### env ####
+
+# mokit
+export MOKIT_ROOT=/public/home/shixueliang/soft/mokit
+export PATH=$MOKIT_ROOT/bin:$PATH
+export PYTHONPATH=$MOKIT_ROOT/lib:$PYTHONPATH
+#export ORCA=/public/home/shixueliang/soft/ORCA-5.0.4/orca
+export GMS=/public/home/shixueliang/soft/gamess/rungms
+alias gms='/public/home/shixueliang/soft/gamess/rungms'
+# cint_and_xc_pyscf-1.7.6
+export LD_LIBRARY_PATH=/public/home/shixueliang/soft/cint_and_xc/lib:$LD_LIBRARY_PATH
+# pyscf-1.7.6
+export PYTHONPATH=/public/home/shixueliang/soft/pyscf-1.7.6:$PYTHONPATH
+# g16C01
+export g16root=/public/home/shixueliang/soft
+source $g16root/g16/bsd/g16.profile
+export GAUSS_SCRDIR=/public/home/\$USER/scr
+export RSH_COMMAND="/usr/bin/ssh -x"
+# ORCA-5.0.4
+export PATH=/public/home/shixueliang/soft/ORCA-5.0.4:$PATH
+export LD_LIBRARY_PATH=/public/home/shixueliang/soft/ORCA-5.0.4:$LD_LIBRARY_PATH
+#export ORCA=/public/home/shixueliang/soft/ORCA-5.0.4/orca
+alias orca='/public/home/shixueliang/soft/ORCA-5.0.4/orca'
+# openmpi411
+export PATH=/public/home/shixueliang/soft/openmpi-4.1.1/bin:$PATH
+export LD_LIBRARY_PATH=/public/home/shixueliang/soft/openmpi-4.1.1/lib:$LD_LIBRARY_PATH
+
+
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /public/home/\$USER ]; then
+  mkdir -p /public/home/\$USER
+fi
+if [ ! -d /public/home/\$USER/scr ]; then
+  mkdir -p /public/home/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /public/home/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \$PBS_O_WORKDIR/${JOB_NAME}.* .
+
+echo "Job started from \${PBS_O_HOST}, running on `hostname`" >> $outfile 
+echo "Job execution start: `date`" >> $outfile
+echo "PBS Job ID is: \${PBS_JOBID}" >> $outfile
+cat \$PBS_NODEFILE >> $outfile
+automr  3_rraaaa_bs_optfed_casscf44.gjf >& 3_rraaaa_bs_optfed_casscf44.out &
+cp \$tmpdir/* \$PBS_O_WORKDIR/
+
+rm -rf \$tmpdir
+
+#
+# Now submit it to the PBS queue batch
+#
+qsub -m n ${WORK_DIR}/${QSUB_SCRIPT}

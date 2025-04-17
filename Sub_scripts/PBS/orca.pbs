@@ -1,0 +1,54 @@
+#!/bin/csh
+
+set WORK_DIR = ${PWD}
+# job description in amber9: filename before last period
+set JOB_NAME=$1:r
+set JOB_OUT=${JOB_NAME}.out
+# job name=dir tree + datetime +job description
+set QSUB_SCRIPT = ${JOB_NAME}.sh
+set outfile = ${JOB_NAME}.info
+set errfile = ${JOB_NAME}.err
+
+# BUILD THE QSUB_SCRIPT FILE
+cat << EOF > ${WORK_DIR}/${QSUB_SCRIPT}
+#!/bin/bash
+#PBS -l nodes=1:ppn=28
+#PBS -l walltime=8760:00:00
+#PBS -N $JOB_NAME
+#PBS -j oe
+
+#Please give the name of the INPUT_FILE, such as test(.chm)
+INPUT_FILE=$JOB_NAME
+
+#### orca ####
+nodule add orca/5.0.3
+
+export RSH_COMMAND="/usr/bin/ssh -x"
+ulimit -s unlimited
+
+#### dir ####
+if [ ! -d /s1/\$USER ]; then
+  mkdir -p /s1/\$USER
+fi
+if [ ! -d /s1/\$USER/scr ]; then
+  mkdir -p /s1/\$USER/scr
+fi
+tmpdir=\$(mktemp -d /s1/\$USER/${JOB_NAME}_XXXXXX)
+cd \$tmpdir
+echo tmpdir=\$tmpdir
+cp \$PBS_O_WORKDIR/${JOB_NAME}.* .
+
+echo "Job started from \${PBS_O_HOST}, running on 'hostname'" >> $outfile
+echo "Job execution start: 'date'" >> $outfile
+echo "PBS Job ID is: \${PBS_JOBID}" >> $outfile
+cat \$PBS_NODEFILE >> $outfile
+/share/spps/orca_5_0_1/orca $1 >& $JOB_OUT
+cp \$tmpdir/* \$PBS_O_WORKDIR/
+
+rm -rf \$tmpdir
+EOF
+
+#
+#Now submit it to the PBS queue batch
+#
+qsub ${WORK_DIR}/${QSUB_SCRIPT}
