@@ -1,0 +1,16 @@
+-------------------------------------------------
+Example 1: transfer RHF MOs from Gaussian to ORCA
+-------------------------------------------------
+(1)You should first add "nosymm int=nobasistransform" keywords in Gaussian *.gjf file, and then obtain *.fchk file
+(2)Run 'fch2mkl 04-PhCOOH_def2TZVP_rhf.fchk' in Shell, two files(.mkl and .inp) would be generated.
+(3)Then run 'orca_2mkl 04-PhCOOH_def2TZVP_rhf -gbw' in Shell, you can obtain 04-PhCOOH_def2TZVP_rhf.gbw file.
+(4)Finally run 'orca 04-PhCOOH_def2TZVP_rhf.inp >& 04-PhCOOH_def2TZVP_rhf.out', you will find that the RHF energy
+can be exactly reproduced using the utility fch2mkl.
+
+
+
+
+
+
+
+

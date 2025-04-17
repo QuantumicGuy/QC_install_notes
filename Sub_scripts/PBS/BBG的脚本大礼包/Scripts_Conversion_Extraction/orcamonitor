@@ -1,0 +1,102 @@
+#!/bin/bash
+# version 1 by Jianyong Yuan @ 20210116. IF you have any suggestions please contact QQ:404283110 or E-mail: 404283110@qq.com 
+if [[ $# -ne 1 ]] ; then
+    echo -e "usage: orcamonitor orca_outputs.log\n"
+    exit 1
+fi
+
+INPF=$1
+
+function get_scf_energy(){
+	nSPE=$(grep "FINAL SINGLE POINT ENERGY" $INPF |wc -l)
+	grep "FINAL SINGLE POINT ENERGY" $INPF | awk '{printf "%f\n",$5}' > ORM_SCFE
+	initE=$(cat ORM_SCFE | head -n 1)
+	relativeE=$(cat ORM_SCFE | awk -v ene="$initE" 'BEGIN{e=0}{de=($0-ene)*627.51-e;e=($0-ene)*627.51;printf "%10.3f%10.3f",e,de}')
+	nscf=$(awk '{if($0 ~/SCF CONVERGED AFTER/) print $5}' $INPF)
+	printf "%10s%10s\n" "RE(kCal)" "dE(kCal)" > ORM_TMP
+	printf "%10.3f%10.3f\n" $relativeE >> ORM_TMP
+	printf "%s\n" "scf" > ORM_SCF
+	printf "%d\n" $nscf >> ORM_SCF
+	printf "%s\n" "scf-t(min)" > ORM_SCFT
+	SCFT=$(awk '/Total SCF time:/{
+    days=$4
+    hours=$6
+    min=$8
+    sec=$10
+	SCF_time=days*1440+hours*60+min+sec/60
+    printf("%-8.1f\n",SCF_time)}' $INPF)
+	echo "$SCFT" >> ORM_SCFT
+	paste ORM_TMP ORM_SCF ORM_SCFT > ORM_TMP2
+	awk 'BEGIN{i=1}/.*/{if(NR==1) printf("step%-10s\n",$0); else printf("%-4d%s\n",i,$0,i++)}' ORM_TMP2 > ORM_GE
+}
+
+function get_opt_info(){
+    printf "%-6s\t%-6s\t%-6s\t%-6s\n" "MF" "RF" "MD" "RD" > ORM_OPT_CONV
+	nopt=$(grep "Geometry convergence" $INPF |wc -l)
+    opt_conv=$(grep -B4 "\.\.\.\.\.\.\.\.\.\." $INPF | grep -vE "\.\..*|--.*" |awk '{
+        RF=$3/$4
+        getline
+        MF=$3/$4
+        getline
+        RD=$3/$4
+        getline
+        MD=$3/$4
+        printf("%-6.2f\t%-6.2f\t%-6.2f\t%-6.2f\n",MF,RF,MD,RD)}' )
+    if [[ -z $opt_conv ]];then
+        opt_conv=$(printf "%-6s\t%-6s\t%-6s\t%-6s\n" N/A N/A N/A N/A)
+    fi
+    echo "$opt_conv" >> ORM_OPT_CONV
+	if [[ $nopt -ne $nSPE ]];then
+		printf "%-6s\t%-6s\t%-6s\t%-6s\n" "N/A" "N/A" "N/A" "N/A" >> ORM_OPT_CONV
+	fi
+	printf "%s\n" "grad-t(min)" > ORM_GRADT
+	GRADT=$(awk '/Total SCF gradient time/{
+    sec=$6
+	min=sec/60
+    printf("%-8.1f\n",min)}' $INPF)
+	echo "$GRADT" >> ORM_GRADT
+	paste ORM_OPT_CONV ORM_GRADT > ORM_OPT
+}
+
+function get_hessian_eigenvalues(){
+	printf "%18s\n" " Eigenvalue X 100" > ORM_HESS_EIGN
+	if grep -wq "Hessian has" $INPF && grep -wq "Lowest eigenvalues of the Hessian:" $INPF;then
+		hess_eign=$(awk '/Lowest eigenvalues of the Hessian:/{
+			getline
+			eigen1=$1
+			eigen2=$2
+			eigen3=$3
+			printf("%-6.2f  %-6.2f  %-6.2f\n",eigen1*100,eigen2*100,eigen3*100)}' $INPF)
+	elif (! grep -wq "Hessian has" $INPF) && grep -wq "Lowest eigenvalues of augmented Hessian:" $INPF;then
+		hess_eign=$(awk '/Lowest eigenvalues of augmented Hessian:/{
+				getline
+				eigen1=$1
+				eigen2=$2
+				eigen3=$3
+				printf("%-6.2f  %-6.2f  %-6.2f\n",eigen1*100,eigen2*100,eigen3*100)}' $INPF)
+	else
+		echo "No hessian eigenvalues detected" >> ORM_HESS_EIGN
+	fi
+	echo "$hess_eign" >> ORM_HESS_EIGN
+}
+
+get_scf_energy
+get_opt_info
+get_hessian_eigenvalues
+
+paste ORM_GE ORM_OPT ORM_HESS_EIGN | column -s $'\t' -t | cut -c 1-$(tput cols)
+rm ORM_*
+
+grep "THE OPTIMIZATION HAS CONVERGED" $INPF
+grep "*** OPTIMIZATION RUN DONE ***" $INPF
+if grep -wq "ORCA SCF HESSIAN" $INPF && ! grep -wq "Total SCF Hessian time" $INPF;then
+	echo "->> Calculating SCF HESSIAN (frequency) now ..."
+elif grep -wq "Total SCF Hessian time" $INPF;then
+	echo "                                  *** SCF HESSIAN DONE ***"
+fi
+sed -n '/Timings for individual modules:/,/TERMINATED NORMALLY/{/Timings for individual modules:/n;/TERMINATED NORMALLY/b;p}' $INPF
+grep -A1 "****ORCA TERMINATED NORMALLY****" $INPF
+grep "error termination" $INPF
+
+
+
