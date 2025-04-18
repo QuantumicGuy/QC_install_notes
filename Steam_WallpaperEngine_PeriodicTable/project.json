@@ -1,0 +1,271 @@
+{
+	"approved" : true,
+	"contentrating" : "Everyone",
+	"description" : "Add valence electron configuration to \"Periodic Table of Elements *** 40 LANGUAGES ***\". Copyright (c) 2019 by Mike Golus (https://codepen.io/mikegolus/pen/OwrPgB)",
+	"file" : "index.html",
+	"general" : 
+	{
+		"properties" : 
+		{
+			"atomic_info" : 
+			{
+				"index" : 2,
+				"options" : 
+				[
+					{
+						"label" : "Atomic mass",
+						"value" : "atomic_mass"
+					},
+					{
+						"label" : "Discovery Year",
+						"value" : "discovery_year"
+					},
+					{
+						"label" : "Earth Crust (%)",
+						"value" : "earth_crust"
+					},
+					{
+						"label" : "Electronegativity (Pauling scale)",
+						"value" : "electronegativity_Pauling_scale"
+					},
+					{
+						"label" : "Electron configuration",
+						"value" : "electron_configuration"
+					},
+					{
+						"label" : "Ionization Energy (eV)",
+						"value" : "ionization_energy"
+					}
+				],
+				"order" : 102,
+				"text" : "Atomic Info",
+				"type" : "combo",
+				"value" : "atomic_mass"
+			},
+			"background_color" : 
+			{
+				"index" : 3,
+				"order" : 103,
+				"text" : "Background Color",
+				"type" : "color",
+				"value" : "0.06 0.07 0.09"
+			},
+			"language" : 
+			{
+				"index" : 4,
+				"options" : 
+				[
+					{
+						"label" : "English",
+						"value" : "english"
+					},
+					{
+						"label" : "Español",
+						"value" : "spanish"
+					},
+					{
+						"label" : "Français",
+						"value" : "french"
+					},
+					{
+						"label" : "Dansk",
+						"value" : "danish"
+					},
+					{
+						"label" : "Deutsch",
+						"value" : "german"
+					},
+					{
+						"label" : "Dutch",
+						"value" : "dutch"
+					},
+					{
+						"label" : "Italiano",
+						"value" : "italian"
+					},
+					{
+						"label" : "Kurdî",
+						"value" : "kurdish"
+					},
+					{
+						"label" : "Latviešu",
+						"value" : "latvian"
+					},
+					{
+						"label" : "Lietuviškai",
+						"value" : "lithuanian"
+					},
+					{
+						"label" : "Македонски",
+						"value" : "macedonian"
+					},
+					{
+						"label" : "Magyar",
+						"value" : "hungarian"
+					},
+					{
+						"label" : "Norsk",
+						"value" : "norwegian"
+					},
+					{
+						"label" : "O'zbekcha",
+						"value" : "uzbek"
+					},
+					{
+						"label" : "Polska",
+						"value" : "polish"
+					},
+					{
+						"label" : "Português",
+						"value" : "portuguese"
+					},
+					{
+						"label" : "Suomi",
+						"value" : "finnish"
+					},
+					{
+						"label" : "Svensk",
+						"value" : "swidish"
+					},
+					{
+						"label" : "Română",
+						"value" : "romanian"
+					},
+					{
+						"label" : "فارسی",
+						"value" : "farsi"
+					},
+					{
+						"label" : "Ελληνικα",
+						"value" : "greek"
+					},
+					{
+						"label" : "Bahasa Melayu",
+						"value" : "malay"
+					},
+					{
+						"label" : "Türkçe",
+						"value" : "turkish"
+					},
+					{
+						"label" : "한국어",
+						"value" : "korean"
+					},
+					{
+						"label" : "हिन्दी",
+						"value" : "hindi"
+					},
+					{
+						"label" : "русский",
+						"value" : "russian"
+					},
+					{
+						"label" : "Slovenčina",
+						"value" : "slovak"
+					},
+					{
+						"label" : "中文",
+						"value" : "chinese"
+					},
+					{
+						"label" : "日本語",
+						"value" : "japanese"
+					},
+					{
+						"label" : "العربية",
+						"value" : "arabic"
+					},
+					{
+						"label" : "Česky",
+						"value" : "czech"
+					},
+					{
+						"label" : "Íslenska",
+						"value" : "icelandic"
+					},
+					{
+						"label" : "বাংলা",
+						"value" : "bengali"
+					},
+					{
+						"label" : "Tiếng Việt",
+						"value" : "vietnamese"
+					},
+					{
+						"label" : "ไทย",
+						"value" : "thai"
+					},
+					{
+						"label" : "Српски",
+						"value" : "serbian"
+					},
+					{
+						"label" : "Български",
+						"value" : "bulgarian"
+					},
+					{
+						"label" : "Українска",
+						"value" : "ukrainian"
+					},
+					{
+						"label" : "eesti keel",
+						"value" : "estonian"
+					},
+					{
+						"label" : "Hrvatska",
+						"value" : "croatian"
+					}
+				],
+				"order" : 104,
+				"text" : "Language",
+				"type" : "combo",
+				"value" : "english"
+			},
+			"music" : 
+			{
+				"index" : 0,
+				"order" : 100,
+				"text" : "Play Music Intro",
+				"type" : "bool",
+				"value" : false
+			},
+			"music_volume" : 
+			{
+				"condition" : "music.value",
+				"index" : 1,
+				"max" : 100,
+				"min" : 0,
+				"order" : 101,
+				"step" : 1,
+				"text" : "Music Volume",
+				"type" : "slider",
+				"value" : 25
+			},
+			"schemecolor" : 
+			{
+				"order" : 0,
+				"text" : "ui_browse_properties_scheme_color",
+				"type" : "color",
+				"value" : "0 0 0"
+			},
+			"ultrawide_monitor" : 
+			{
+				"index" : 5,
+				"order" : 105,
+				"text" : "Ultrawide Monitor",
+				"type" : "bool",
+				"value" : false
+			}
+		}
+	},
+	"preview" : "preview.gif",
+	"ratingsex" : "none",
+	"ratingviolence" : "none",
+	"tags" : [ "Technology" ],
+	"title" : "Periodic Table of Elements with Valence",
+	"type" : "web",
+	"version" : 2,
+	"visibility" : "public",
+	"workshopid" : "3466097559",
+	"workshopurl" : "steam://url/CommunityFilePage/3466097559"
+}
