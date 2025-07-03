@@ -1,0 +1,29 @@
+#!/bin/bash
+
+input_file="$1"
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+filename=$(basename -- "$input_file")
+filename_no_ext="${filename%.*}"
+echo "The job is: ${filename_no_ext}"
+
+# Submit the job to SLURM
+sbatch << EOF
+#!/bin/bash
+#SBATCH -J ${filename_no_ext}
+#SBATCH -N 1
+#SBATCH -n 40
+#SBATCH --mem=200G
+#SBATCH -p normal
+#SBATCH -o ${filename_no_ext}.log
+
+cd $(pwd)
+module load xtb/6.7.1
+
+xtb $input_file --chrg 0 --uhf 0 --opt extreme
+EOF
+
+# chmod +x rxtb, use rxtb in any directory (e.g., rxtb test.xyz)
