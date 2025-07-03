@@ -1,0 +1,265 @@
+#!/bin/bash
+# A simple wrapper for squeue formating, bash 4.0+
+# two letter args to avoid overwritting original suque args
+# by Junhao Li@noplace
+# http://bbs.keinsci.com/thread-21401-1-1.html
+
+USAGE()
+{
+echo
+printf "This is a raw wrapper for the squeue command\n"
+printf "Running without any options will show:\n"
+printf "${b_CGRE} JOBID ACCOUNT NAME USER ST TIME TIME_LIMIT NODE CPUS SUBMIT_TIME  WORK_DIR${CDEF}\n"
+printf "OPTIONAL ${b_CRED}arguments${CDEF} and ${b_CBLU}parameters${CDEF}: \n"
+printf " ${b_CRED}-h  | --help${CDEF}            ${b_CBLU}print the help information${CDEF}\n"
+printf " ${b_CRED}-pt | --show_partition${CDEF}  ${b_CBLU}number of spaces${CDEF} (Required because PARTITION not shown by default)\n"
+printf " ${b_CRED}-nl | --show_nodelist${CDEF}   ${b_CBLU}number of spaces${CDEF} (Required because NODELIST not shown by default)\n"
+printf " ${b_CRED}-rp | --reason_pending${CDEF}  ${b_CBLU}number of spaces${CDEF} (Required because job_priority not shown by default)\n"
+printf " ${b_CRED}-st | --start_time${CDEF}      ${b_CBLU}number of spaces${CDEF} (Required because START_TIME not shown by default)\n"
+printf " ${b_CRED}-sn | --scheduled_node${CDEF}  ${b_CBLU}number of spaces${CDEF} (Required because SCHEDNODE not shown by default)\n"
+printf " ${b_CRED}-jl | --jobname_length${CDEF}  ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}NAME${CDEF})\n"
+printf " ${b_CRED}-ji | --jobID_length${CDEF}    ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}JOBID${CDEF})\n"
+printf " ${b_CRED}-wd | --work_dir${CDEF}        ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}WORK_DIR${CDEF})\n"
+printf "                            option2 for wd, e.g. ${b_CBLU}-wd 3/${CDEF} will remove the first three '/' in WORK_DIR\n"
+printf " ${b_CRED}-ac | --show_account${CDEF}    ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}ACCOUNT${CDEF})\n"
+printf " ${b_CRED}-sb | --submit_time${CDEF}     ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}SUBMIT_TIME${CDEF})\n"
+printf " ${b_CRED}-ti | --time_used${CDEF}       ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}TIME${CDEF})\n"
+printf " ${b_CRED}-tl | --time_limit${CDEF}      ${b_CBLU}number of spaces${CDEF} (this num is optional, empty will hide ${b_CGRE}TIME_LIMIT${CDEF})\n"
+printf " ${b_CRED}-ul | --user_list${CDEF}       ${b_CBLU}user1,user2,... (user name(s) is Required)${CDEF}\n"
+printf " ${b_CRED}-tu | --tcb_users${CDEF}       ${b_CBLU}show jobs submitted by TCB Users, predefined, no parameters!${CDEF}\n"
+printf " ${b_CRED}-cl | --clear_look${CDEF}      ${b_CBLU}have a clear look, no parameters! And it overwrites the -wd [0-9]/ setting!${CDEF}\n"
+printf " ${b_CRED} *${CDEF}                      ${b_CBLU}other arguments and parameters passing to squeue${CDEF}\n"
+printf "Examples: ${CGRE}squ -wd${CDEF} (hide WORK_DIR);         ${CGRE}squ -nl 8${CDEF}   (show NODELIST in 8 spaces)\n"
+printf "          ${CGRE}squ -ac -cl -st 18${CDEF} (hide account, clear look, show StartTime in 18 spaces)\n"
+printf "          ${CGRE}squ -jl 20 -tu -wd 5/${CDEF} (show JOB_NAME in 20 spaces, show TCB users, hide top 5 directories)\n"
+printf "          ${CGRE}squ --star${CDEF} or ${CGRE}squ --start${CDEF} (pass '--start' to squeue, will overwrite all the user formatings!)\n"
+echo
+}
+
+get_clear_look()
+{
+# Don't use '/' in a job name!
+tmp=$1
+ln=$(cat $tmp | wc -l)
+sed -n 1p $tmp
+for i in $(seq 2 $ln); do
+    line=$(sed -n ${i}p $tmp)
+    cutting=$(expr index "${line}" '/')
+    if [[ ${#line} -le $COLUMNS ]]; then
+        printf "${nCLO}${line}${CDEF}\n"
+    elif [[ $2 -ge 1 ]]; then
+        stripped_part=$(echo "${line:$[cutting-1]}")
+        cutting2=$(expr index "${stripped_part}" ' ')
+        [[ $cutting2 -gt 0 ]] && left=$(echo "${stripped_part:$cutting2}")
+        sub_dir=($(echo "${line:$[cutting-1]}" | awk '{print $1}' | sed 's/\//\ /g'))
+        for j in $(seq 0 $2); do
+            sub_dir[j]=''
+        done
+        printf "${line:0:$[cutting-1]} ${CGRE}$(echo ${sub_dir[@]} | sed 's/\ /\//g')${CDEF} ${left}\n"
+    else
+        [[ $(($i % 2)) == 0 ]] && nCLO=${CMAG} || nCLO=${CDEF}
+        if [[ ${#line} -gt $COLUMNS ]]; then
+            printf "${nCLO}${line:0:$[cutting-1]}${CDEF}\n"
+            printf "${nCLO}         ${line:$[cutting-1]}${CDEF}\n"
+        else
+            printf "${nCLO}${line}${CDEF}\n"
+        fi
+        #echo
+    fi
+done
+}
+
+required_block()
+{
+# usage require_block '-pt' "$2" "PARTITION" 'P'
+req_array=()
+if [[ "$2" -gt 0 ]]; then
+    out=" %${2}${4}"
+    shif=2
+else
+    shif='X'
+fi
+msg="Please input a number after $1\nbecause showing $3 is not default, i.e. \$(squ) won't display $3\n"
+req_array[0]="$out"
+req_array[1]="$shif"
+req_array[2]="$msg"
+}
+
+optional_block()
+{
+# usage: optional_block '-wd' "$2" 'WORK_DIR' 'Z'
+opt_array=() # default it is a global array
+if [[ "$2" -gt 0 ]]; then
+    out=" %${2}${4}"
+    shif=2 
+elif [[ -z $2 || ${2:0:1} == '-' ]]; then
+    out=" "
+    shif=1
+else
+    shif='X'
+fi
+msg="Please input a number after $1\nOr just leave it empty, which will hide $3\n"
+opt_array[0]="$out"
+opt_array[1]="$shif"
+opt_array[2]="$msg"
+}
+
+###################### script starts here ######################
+# default output: no any arguments! Can be adjusted to your favorite style
+[[ -z $1 ]] && squeue -u $USER -o ' %8i %14a %14j %8u %3t %8M %7l %4D %5C %16V %Z' && exit 0
+
+_columns=$(resize | sed -n 1p)
+eval $_columns
+
+# some defaults and colors:
+squeueArgs=()
+userList=$USER
+TCBUserList="username1,username2,username3" # 4, 5, 6, ...
+showAccount=" %14a"
+showJobLen=" %14j"
+showJobID=" %8i"
+showSubTime=" %16V"
+showWorkingDir=" %Z"
+showUserName=" %8u"
+showJobStateC=" %3t"
+showTimeUsed=" %8M"
+showTimeLimit=" %7l"
+showNodeNum=" %4D"
+showCoreNum=" %5C"
+CDEF=" \033[0m"     ;  b_CDEF=" \033[1m"      # default; bold_default
+CRED=" \033[0;31m"  ;  b_CRED=" \033[1;31m"   # red;     bold_red
+CGRE=" \033[0;32m"  ;  b_CGRE=" \033[1;32m"   # green;   bold_green
+CYEL=" \033[0;33m"  ;  b_CYEL=" \033[1;33m"   # yellow;  bold_yellow
+CBLU=" \033[0;34m"  ;  b_CBLU=" \033[1;34m"   # blue;    bold_blue
+CMAG=" \033[0;35m"  ;  b_CMAG=" \033[1;35m"   # magenta; bold_magenta
+CCYA=" \033[0;36m"  ;  b_CCYA=" \033[1;36m"   # cyan;    bold_cyan
+_cmdR=$(echo "[[ \${req_array[1]} == 'X' ]] && printf \"\${req_array[2]}\" && exit 1 || shift \${req_array[1]}")
+_cmdO=$(echo "[[ \${opt_array[1]} == 'X' ]] && printf \"\${opt_array[2]}\" && exit 1 || shift \${opt_array[1]}")
+
+while [[ $# -gt 0 ]]; do
+    case $1 in 
+    -pt | --show_partition)
+        required_block '-pt' "$2" 'PARTITION' 'P'
+        showPartition="${req_array[0]}"
+        eval $_cmdR
+    ;;
+    -nl | --show_nodelist)
+        required_block '-nl' "$2" 'NODELIST' 'N'
+        showNodeList="${req_array[0]}"
+        eval $_cmdR
+    ;;
+    -rp | --reason_pending)
+        required_block '-rp' "$2" 'job_priority' 'R'
+        showNodeReason="${req_array[0]}"
+        eval $_cmdR
+    ;;
+    -st | --start_time)
+        required_block '-st' "$2" 'START_TIME' 'S'
+        showStartTime="${req_array[0]}"
+        eval $_cmdR
+    ;;
+    -sn | --scheduled_node)
+        required_block '-sn' "$2" 'SCHEDNODE' 'Y'
+        showSchedNode="${req_array[0]}"
+        eval $_cmdR
+    ;;
+    -jl | --jobname_length) 
+        optional_block '-jl' "$2" 'NAME' 'j'
+        showJobLen="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -ji | --jobid_length)
+        optional_block '-ji' "$2" 'JOBID' 'i'
+        showJobID="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -ac | --show_account)
+        optional_block '-ac' "$2" 'ACCOUNT' 'a'
+        showAccount="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -sb | --submit_time)
+        optional_block '-sb' "$2" 'SUBMIT_TIME' 'V'
+        showSubTime="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -ti | --time_used)
+        optional_block '-ti' "$2" 'TIME_USED' 'M'
+        showTimeUsed="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -tl | --time_limit)
+        optional_block '-tl' "$2" 'TIME_LIMIT' 'l'
+        showTimeLimit="${opt_array[0]}"
+        eval $_cmdO
+    ;;
+    -wd | --working_dir)
+        if [[ $(echo $2 | grep '/' | wc -l) -eq 1 ]]; then
+            strip_wd=${2///}
+            showWorkingDir=" %Z"
+            shift 2
+        elif [[ -z $2 || ${2:0:1} == '-' ]]; then
+            showWorkingDir=" "
+            shift 1
+        elif [[ "$2" -gt 0 ]]; then
+            showWorkingDir=" %${2}Z"
+            shift 2
+        else
+            echo "Please input a number (or number/ ) after -wd"
+            echo "Or just leave it empty, which will hide WORK_DIR"
+            exit 1
+        fi
+    ;;
+    -ul | --user_list) #user1,user2,.. or user1
+        specific_user=1
+        if [[ -z $showTCBUsers ]]; then
+            if [[ ! -z $2 && ${2:0:1} != '-' ]]; then
+                userList=${2}
+                shift 2
+            else
+                echo "please give at least a valid user after -ul, e.g. user1,user2,..."
+                exit 1
+            fi
+        else
+            echo "-ul could not be used together with -tu !"
+            exit 1
+        fi
+    ;;
+    -tu | --tcb_users)
+        showTCBUsers=1
+        if [[ -z $specific_user ]]; then
+            userList=$TCBUserList
+            shift 1
+        else
+            echo "-tu could not be used together with -ul"
+            exit 1
+        fi
+    ;;
+    -cl | --clear_look)
+        clear_look=1
+        shift 1
+    ;;
+    -h | --help)
+        USAGE
+        exit 0
+    ;;
+    *) # Other argurement pass to squeue!
+        squeueArgs=(${squeueArgs[*]} $1)
+        shift 1
+    ;;
+    esac
+done
+
+UserFormat=$(echo ${showJobID}${showPartition}${showAccount}${showJobLen}${showUserName}\
+${showJobStateC}${showTimeUsed}${showTimeLimit}${showNodeNum}${showCoreNum}${showSubTime}\
+${showWorkingDir} ${showNodeList}${showNodeReason}${showStartTime}${showSchedNode})
+
+if [[ $clear_look -eq 1 ]]; then
+    squeue -u $userList ${squeueArgs[@]} -o "$UserFormat" > /tmp/tmp.squ.$USER
+    get_clear_look /tmp/tmp.squ.$USER
+elif [[ $strip_wd -ge 1 ]]; then
+    squeue -u $userList ${squeueArgs[@]} -o "$UserFormat" > /tmp/tmp.squ.$USER
+    get_clear_look /tmp/tmp.squ.$USER $strip_wd
+else
+    squeue -u $userList ${squeueArgs[@]} -o "$UserFormat"
+fi
