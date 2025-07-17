@@ -1,0 +1,23 @@
+--- # PES
+# Double S addition  
+    2CuL-I+B2pin2---2CuL-Bpin+2I: [CuL-I+CuL-I+B2pin2, CuL-Bpin+CuL-Bpin+I+I]
+
+    
+
+--- # SPECIES
+    CuL-I     :   CuL-I
+    B2pin2    :   B2pin2
+    I-Bpin    :   I-Bpin
+    CuL-Bpin  :   CuL-Bpin
+
+--- # FORMAT
+    dec :  1 
+    nits: kcal|mol
+    legend : False
+    color : black,#26a6a4
+    pointlabel : False 
+    gridlines: True
+    show_conformers: True
+    show_gconf: False
+    dpi : 400
+    title: Potential Energy Surface
